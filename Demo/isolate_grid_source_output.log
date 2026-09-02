@@ -1,0 +1,12 @@
+Device: cuda
+A) Propagating pure random phase (no GS, no target)...
+B) Running GS against a heavily blurred (near-edgeless) target...
+Reference) Standard targets (sigma=8), for side-by-side comparison...
+
+Check the saved image: does the grid appear in row A (pure propagation,
+no target involved at all)? If yes, it's in the propagation math, full stop --
+nothing about GS or targets is relevant. If row A is clean but row B (smooth
+target) still shows the grid, it's coming from GS's amplitude-constraint step
+interacting with target content. If row B is ALSO clean, the hard edges in the
+original disc/ring/checker targets are the source.
+Saved plot: isolate_grid_source.png

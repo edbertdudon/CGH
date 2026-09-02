@@ -1,0 +1,10 @@
+Device: cuda
+Running single precision (complex64)...
+  quality: [10.0, 10.3, 10.9]
+Running double precision (complex128) -- this will be noticeably slower...
+  quality: [10.0, 10.4, 10.9]
+
+If the grid artifact is precision-related, the double-precision images below
+should look visibly cleaner (less axis-aligned striping) than single precision,
+even if the PSNR numbers themselves are similar.
+Saved plot: precision_check.png

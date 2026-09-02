@@ -1,0 +1,9 @@
+Device: cuda
+Running with hard cutoff (current default)...
+  quality: [10.0, 10.3, 10.9]
+Running with smoothed cutoff...
+  quality: [10.0, 10.3, 10.9]
+
+If the grid artifact comes from the hard cutoff, the smoothed row below
+should look visibly cleaner (less axis-aligned striping) than the hard row.
+Saved plot: cutoff_smoothing_check.png
