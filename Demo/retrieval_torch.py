@@ -128,6 +128,60 @@ def multiplane_gs_torch(target_planes, depths_m, wavelength, dx, n_iters, device
     return slm_phase.detach(), history, recon_by_checkpoint
 
 
+def multiconstraint_gs_torch(constraints, dx, n_iters, device="cuda", seed=0, pad_factor=2,
+                              complex_dtype=torch.complex64):
+    """
+    Generalizes multiplane_gs_torch: instead of one shared wavelength
+    across several depth planes, each constraint carries its own
+    (target, z, wavelength). Same GS logic either way -- propagate to
+    each constraint, replace amplitude, propagate back, average the
+    corrections, re-enforce phase-only. This makes "solve N depth planes
+    at M colors jointly, in one phase pattern" the same algorithm as
+    ordinary multi-plane GS, just with more constraints in the list.
+
+    constraints: list of dicts, each {"target": 2D array (amplitude,
+    values >=0), "z": depth in meters, "wavelength": meters}
+    """
+    shape = constraints[0]["target"].shape
+    real_dtype = torch.float64 if complex_dtype == torch.complex128 else torch.float32
+    targets_amp = []
+    for c in constraints:
+        t = torch.tensor(c["target"], dtype=real_dtype, device=device)
+        targets_amp.append(torch.sqrt(torch.clamp(t, min=0)))
+
+    torch.manual_seed(seed)
+    slm_phase = (torch.rand(shape, device=device, dtype=real_dtype) * 2 * math.pi - math.pi)
+    slm_field = torch.exp(1j * slm_phase)
+
+    history = []
+    checkpoints = sorted(set([1, max(1, n_iters // 2), n_iters]))
+    recon_by_checkpoint = {}
+
+    for it in range(1, n_iters + 1):
+        correction = torch.zeros(shape, dtype=complex_dtype, device=device)
+        recon_list = []
+        for c, target_amp in zip(constraints, targets_amp):
+            field_at = angular_spectrum_propagate(slm_field, c["wavelength"], dx, c["z"],
+                                                    pad_factor=pad_factor, complex_dtype=complex_dtype)
+            recon_list.append(safe_abs(field_at).detach())
+            phase_at = torch.angle(field_at)
+            constrained = target_amp.to(complex_dtype) * torch.exp(1j * phase_at.to(real_dtype))
+            back = angular_spectrum_propagate(constrained, c["wavelength"], dx, -c["z"],
+                                               pad_factor=pad_factor, complex_dtype=complex_dtype)
+            correction += back
+
+        slm_field = correction / len(constraints)
+        slm_phase = torch.angle(slm_field)
+        slm_field = torch.exp(1j * slm_phase)
+
+        psnrs = [_psnr_torch(r, t) for r, t in zip(recon_list, targets_amp)]
+        history.append(sum(psnrs) / len(psnrs))
+        if it in checkpoints:
+            recon_by_checkpoint[it] = [r.cpu().numpy() for r in recon_list]
+
+    return slm_phase.detach(), history, recon_by_checkpoint
+
+
 def multiplane_sgd(target_planes, depths_m, wavelength, dx, n_steps, lr=0.02, device="cuda", seed=0,
                     lr_schedule=None):
     """

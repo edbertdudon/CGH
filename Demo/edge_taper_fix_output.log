@@ -1,0 +1,21 @@
+Device: cuda
+Part 1: taper on vs off at 2700x2700...
+  no taper quality: [10.0, 10.3, 10.9]
+  taper quality:    [10.3, 10.5, 11.2]
+  Saved: edge_taper_diagnostic.png
+
+Part 2: full-resolution (4700x2700) sequential vs simultaneous, WITH taper...
+======================================================================
+WITH edge taper (width=0.08), full resolution 4700x2700:
+  plane 1: simultaneous 11.6 dB, sequential 11.3 dB, delta -0.3 dB
+  plane 2: simultaneous 12.0 dB, sequential 12.6 dB, delta +0.7 dB
+  plane 3: simultaneous 10.5 dB, sequential 10.5 dB, delta -0.0 dB
+  average delta: +0.11 dB
+
+Compare against the untapered full-resolution result already in the document:
+  deltas were -0.4, +0.5, +0.1 dB (avg ~0.0 dB) without the taper.
+If this run lands in the same range, the ~0dB finding is now directly confirmed,
+not just inferred from common-mode reasoning. If it differs meaningfully, the
+artifact WAS biasing the comparison and this run supersedes the untapered one.
+======================================================================
+Saved: full_resolution_taper_confirmed.png

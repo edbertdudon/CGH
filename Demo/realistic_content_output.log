@@ -1,0 +1,34 @@
+Device: cuda
+Warming up GPU...
+======================================================================
+REALISTIC CONTENT, full resolution 4700x2700
+
+  near: UI icon
+    simultaneous: 11.9 dB  (synthetic-target reference: 11.0 dB)
+    sequential:   13.3 dB  (delta: +1.4 dB)
+  mid: caption text
+    simultaneous: 14.0 dB  (synthetic-target reference: 11.7 dB)
+    sequential:   18.0 dB  (delta: +4.0 dB)
+  far: photo-like scene
+    simultaneous: 10.1 dB  (synthetic-target reference: 10.3 dB)
+    sequential:   13.1 dB  (delta: +3.0 dB)
+
+  Masked PSNR (content bounding box only, not whole-frame) for the two sparse
+  planes -- whole-frame PSNR on mostly-empty content inflates/distorts the delta:
+    near: UI icon: simultaneous 7.6 dB, sequential 7.6 dB, delta +0.0 dB  (whole-frame delta was +1.4 dB)
+    mid: caption text: simultaneous 9.9 dB, sequential 9.9 dB, delta +0.1 dB  (whole-frame delta was +4.0 dB)
+  far: photo-like scene: not masked -- content fills the whole frame, no dominant
+    empty background, so the whole-frame delta (+3.0 dB) is already meaningful.
+
+Average sequential delta: +2.77 dB (synthetic-target reference: +0.0 dB)
+
+Does the quality ceiling hold? Compare each plane's simultaneous dB above
+against its synthetic-target reference -- similar range confirms the ~10-13dB
+ceiling isn't specific to geometric test shapes.
+Does the 'no sequential advantage' finding hold? Check whether the average
+delta is still close to 0dB, or whether real content (especially the text
+plane, likely the hardest case) shows a real benefit that synthetic shapes hid.
+
+Peak GPU memory: 4.88 GB
+======================================================================
+Saved plot: realistic_content_results.png

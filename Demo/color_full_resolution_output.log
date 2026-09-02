@@ -1,0 +1,36 @@
+Device: cuda
+Warming up GPU...
+
+A) Native per-color solves (3 runs, one per color)...
+   green: [11.9, 14.0, 10.1] dB  (10.05s, 192 FFTs)
+   red: [11.7, 14.2, 10.8] dB  (10.05s, 192 FFTs)
+   blue: [12.4, 13.6, 10.4] dB  (10.08s, 192 FFTs)
+
+B) Naive reuse: green-native phase, propagated at red/blue (no re-solving)...
+   red: [13.4, 16.0, 7.7] dB
+   blue: [12.5, 15.9, 7.3] dB
+
+C) Joint solve: one phase pattern, all 9 (depth, color) constraints at once...
+   (30.17s, 576 FFTs)
+   green: [12.0, 15.9, 8.8] dB
+   red: [11.9, 14.8, 9.4] dB
+   blue: [12.2, 14.9, 8.7] dB
+
+==============================================================================
+plane   color   A: native   B: naive reuse  C: joint  
+near    green   11.9        11.9            12.0      
+near    red     11.7        13.4            11.9      
+near    blue    12.4        12.5            12.2      
+mid     green   14.0        14.0            15.9      
+mid     red     14.2        16.0            14.8      
+mid     blue    13.6        15.9            14.9      
+far     green   10.1        10.1            8.8       
+far     red     10.8        7.7             9.4       
+far     blue    10.4        7.3             8.7       
+==============================================================================
+Average native (A): 12.1 dB
+Average naive reuse, red+blue only (B): 12.1 dB
+Average joint solve, red+blue only (C): 12.0 dB
+Joint solve lands close to native -- promising, worth further testing.
+Peak GPU memory: 6.10 GB
+Saved plot: color_full_resolution_results.png
