@@ -1,0 +1,21 @@
+Device: cuda
+======================================================================
+SIMULTANEOUS (1 sub-frame, all 3 planes solved by one phase pattern)
+  plane 1: 10.8 dB
+  plane 2: 9.6 dB
+  plane 3: 10.3 dB
+  total FFTs: 192, wall-clock: 1001.7ms
+
+SEQUENTIAL (3 sub-frames, one plane solved at a time)
+  plane 1: 13.7 dB  (64 FFTs, 72.5ms)
+  plane 2: 12.3 dB  (64 FFTs, 72.0ms)
+  plane 3: 11.6 dB  (64 FFTs, 73.1ms)
+  total FFTs: 192, wall-clock: 217.6ms
+======================================================================
+Sequential costs 1.00x the FFTs and 0.22x the wall-clock time
+of simultaneous, for an average +2.3 dB quality gain per plane.
+
+Frame-budget implication (on top of existing 4x eyebox steering):
+  Simultaneous: 4 sub-frames/perceptual-frame -> 360Hz composite (matches doc's 360Hz)
+  Sequential:   12 sub-frames/perceptual-frame -> 1080Hz composite (3x higher)
+Saved plot: sequential_vs_simultaneous.png

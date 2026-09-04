@@ -2,35 +2,35 @@ Device: cuda
 Warming up GPU...
 
 A) Native per-color solves (3 runs, one per color)...
-   green: [11.9, 14.0, 10.1] dB  (10.05s, 192 FFTs)
-   red: [11.7, 14.2, 10.8] dB  (10.05s, 192 FFTs)
-   blue: [12.4, 13.6, 10.4] dB  (10.08s, 192 FFTs)
+   green: [6.4, 7.4, 6.3] dB  (9.99s, 192 FFTs)
+   red: [6.5, 7.5, 6.7] dB  (10.20s, 192 FFTs)
+   blue: [6.5, 7.4, 6.5] dB  (10.03s, 192 FFTs)
 
 B) Naive reuse: green-native phase, propagated at red/blue (no re-solving)...
-   red: [13.4, 16.0, 7.7] dB
-   blue: [12.5, 15.9, 7.3] dB
+   red: [6.0, 5.8, 5.5] dB
+   blue: [6.1, 5.9, 5.3] dB
 
 C) Joint solve: one phase pattern, all 9 (depth, color) constraints at once...
-   (30.17s, 576 FFTs)
-   green: [12.0, 15.9, 8.8] dB
-   red: [11.9, 14.8, 9.4] dB
-   blue: [12.2, 14.9, 8.7] dB
+   (30.10s, 576 FFTs)
+   green: [6.2, 6.2, 5.8] dB
+   red: [6.4, 6.5, 6.1] dB
+   blue: [6.3, 6.4, 5.8] dB
 
 ==============================================================================
 plane   color   A: native   B: naive reuse  C: joint  
-near    green   11.9        11.9            12.0      
-near    red     11.7        13.4            11.9      
-near    blue    12.4        12.5            12.2      
-mid     green   14.0        14.0            15.9      
-mid     red     14.2        16.0            14.8      
-mid     blue    13.6        15.9            14.9      
-far     green   10.1        10.1            8.8       
-far     red     10.8        7.7             9.4       
-far     blue    10.4        7.3             8.7       
+near    green   6.4         6.4             6.2       
+near    red     6.5         6.0             6.4       
+near    blue    6.5         6.1             6.3       
+mid     green   7.4         7.4             6.2       
+mid     red     7.5         5.8             6.5       
+mid     blue    7.4         5.9             6.4       
+far     green   6.3         6.3             5.8       
+far     red     6.7         5.5             6.1       
+far     blue    6.5         5.3             5.8       
 ==============================================================================
-Average native (A): 12.1 dB
-Average naive reuse, red+blue only (B): 12.1 dB
-Average joint solve, red+blue only (C): 12.0 dB
+Average native (A): 6.8 dB
+Average naive reuse, red+blue only (B): 5.8 dB
+Average joint solve, red+blue only (C): 6.3 dB
 Joint solve lands close to native -- promising, worth further testing.
 Peak GPU memory: 6.10 GB
 Saved plot: color_full_resolution_results.png

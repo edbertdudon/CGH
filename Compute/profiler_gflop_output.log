@@ -1,0 +1,43 @@
+Device: cuda
+Warming up GPU...
+
+Layer 1: torch.profiler(with_flops=True)...
+  Reported total FLOPs across 16 iterations (192 FFT calls): 36.788 GFLOP
+  -> Nonzero! Per-FFT: 0.1916 GFLOP (compare to doc's assumed 1.49 GFLOP/FFT)
+
+  Top ops by CUDA time (where is the time actually going):
+-----------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                         Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  Total GFLOPs  
+-----------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+               aten::_fft_c2c         5.31%     329.654ms         5.52%     342.825ms       1.786ms        2.993s        42.65%        3.253s      16.942ms           192            --  
+              aten::fft_ifft2         0.02%       1.433ms         1.57%      97.300ms       1.014ms     317.000us         0.00%        1.746s      18.189ms            96            --  
+                    aten::mul         0.50%      30.897ms         0.50%      30.897ms      26.385us        1.671s        23.81%        1.671s       1.427ms          1171        35.570  
+               aten::fft_fft2         1.55%      96.168ms         5.53%     343.127ms       3.574ms     313.000us         0.00%        1.507s      15.701ms            96            --  
+                  aten::copy_         4.04%     251.052ms         4.50%     279.712ms     868.671us     432.752ms         6.17%     460.486ms       1.430ms           322            --  
+                     aten::to         0.05%       2.913ms         4.41%     273.947ms     264.683us       2.596ms         0.04%     357.863ms     345.761us          1035            --  
+               aten::_to_copy         0.09%       5.492ms         4.36%     271.034ms       1.705ms       1.298ms         0.02%     355.267ms       2.234ms           159            --  
+                    aten::sub         1.04%      64.776ms         1.04%      64.776ms     268.781us     316.192ms         4.50%     316.192ms       1.312ms           241            --  
+                    aten::pow         3.14%     194.692ms         3.14%     194.999ms     580.354us     299.749ms         4.27%     305.661ms     909.705us           336            --  
+                    aten::exp         0.04%       2.265ms         0.04%       2.265ms      14.069us     276.864ms         3.94%     276.864ms       1.720ms           161            --  
+                    aten::div         0.07%       4.262ms         0.07%       4.262ms      14.020us     276.132ms         3.93%     276.132ms     908.329us           304            --  
+                   aten::mul_         0.08%       5.187ms         0.35%      21.476ms      74.569us       2.491ms         0.04%     241.060ms     837.014us           288            --  
+-----------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 6.210s
+Self CUDA time total: 7.019s
+
+
+Layer 2: precise GPU-timed wall-clock (torch.cuda.Event)...
+  Total: 6905.43ms, 192 FFT calls, 35.9658ms/FFT, 431.59ms/iteration
+  Analytic cost per FFT at this (padded) size: 6.497 GFLOP
+  -> Achieved throughput: 0.18 TFLOP/s (1.4% of this GPU's 13.0 TFLOP/s rated peak)
+
+  360Hz frame budget: 2.78ms/frame. One GS iteration measured 431.59ms on this GPU (155.4x the budget).
+  This is a consumer GPU, not the target ASIC -- not a feasibility verdict, but a
+  real-hardware sanity check on whether the compute demand is in a sane ballpark.
+
+======================================================================
+SUMMARY -- numbers to bring back to Section 4.4/4.5:
+  Profiler-measured: 0.1916 GFLOP/FFT (direct)
+  Measured-time + analytic formula: 6.497 GFLOP/FFT, achieved 0.18 TFLOP/s on this GPU (1.4% of peak)
+  Document's current assumption: 1.49 GFLOP/FFT, 7.5 TFLOP/s target
+======================================================================

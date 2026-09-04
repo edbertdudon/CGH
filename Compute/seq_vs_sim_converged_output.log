@@ -1,0 +1,28 @@
+Device: cuda
+Warming up GPU...
+
+Simultaneous: running up to 150 iterations...
+  Plateau at iter 65/150 (mean 12.08 dB), converged
+  Per-plane quality at iter 150: [6.2, 7.8, 7.0]
+
+Sequential, near: running up to 150 iterations...
+  Plateau at iter 2/150 (12.32 dB), converged
+  Quality at iter 150: 6.77 dB
+
+Sequential, mid: running up to 150 iterations...
+  Plateau at iter 2/150 (17.44 dB), converged
+  Quality at iter 150: 8.25 dB
+
+Sequential, far: running up to 150 iterations...
+  Plateau at iter 91/150 (11.98 dB), converged
+  Quality at iter 150: 9.28 dB
+
+======================================================================
+TRUE-CONVERGENCE comparison (not a 16-iteration snapshot):
+plane   simultaneous    sequential    delta     (16-iter delta, for ref)
+near    6.20            6.77          +0.57     (~+1.4 dB at 16 iters)
+mid     7.81            8.25          +0.44     (~+4.0 dB at 16 iters)
+far     7.00            9.28          +2.28     (~+3.0 dB at 16 iters)
+======================================================================
+Saved plot: seq_vs_sim_converged.png
+Saved plot: seq_vs_sim_converged_recon.png

@@ -1,0 +1,19 @@
+Device: cuda
+seed  simultaneous    sequential    delta     
+0     6.32            8.20          +1.88
+1     6.24            8.16          +1.92
+2     6.30            8.40          +2.10
+3     6.35            8.20          +1.85
+4     6.20            7.89          +1.69
+
+==================================================
+Mean delta across 5 seeds: +1.89 dB
+Std dev across seeds: 0.13 dB
+Range: +1.69 to +2.10 dB
+
+Original single-run observation (10.6): +3.0 dB
+Consistent across seeds, well above noise level -- the scene plane's
+sequential advantage appears to be REAL, a genuine content-dependent
+exception to the otherwise-consistent no-advantage finding.
+==================================================
+Saved plot: scene_plane_reverify.png

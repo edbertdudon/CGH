@@ -35,10 +35,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from fft_counter_torch import counter
-from targets import make_realistic_multiplane_target
+from targets import make_realistic_multiplane_target, sparse_content_bounds
 from retrieval_torch import multiplane_gs_torch, multiconstraint_gs_torch
 from propagation_torch import angular_spectrum_propagate, safe_abs
-from metrics import psnr as psnr_np
+from metrics import psnr_intensity as psnr_np
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 DX = 2.0e-6
@@ -49,6 +49,18 @@ N_ITERS = 16
 
 WAVELENGTHS = {"green": 520e-9, "red": 638e-9, "blue": 450e-9}
 PLANE_NAMES = ["near", "mid", "far"]
+# near (icon) and mid (text) are sparse -- mostly empty background -- and need
+# masked PSNR, same fix as 10.6. far (photo-like scene) fills the frame and
+# doesn't need masking. Missing this the first time around silently reintroduced
+# the exact background-inflation bug already found and fixed once.
+SPARSE_PLANES = {0, 1}
+
+
+def masked_or_full_psnr(recon, target, plane_idx):
+    if plane_idx in SPARSE_PLANES:
+        rows, cols = sparse_content_bounds(target)
+        return psnr_np(recon[rows, cols], target[rows, cols])
+    return psnr_np(recon, target)
 
 
 def run_and_time(fn, *args, **kwargs):
@@ -86,7 +98,7 @@ def main():
             multiplane_gs_torch, targets, DEPTHS_M, wl, DX, N_ITERS, device=DEVICE, pad_factor=PAD_FACTOR
         )
         final = max(cps.keys())
-        q = [psnr_np(cps[final][i], targets[i]) for i in range(3)]
+        q = [masked_or_full_psnr(cps[final][i], targets[i], i) for i in range(3)]
         native_quality[color] = q
         native_phase[color] = phase
         print(f"   {color}: {[round(x,1) for x in q]} dB  ({t:.2f}s, {ffts} FFTs)")
@@ -100,7 +112,7 @@ def main():
         for i, z in enumerate(DEPTHS_M):
             recon = angular_spectrum_propagate(torch.exp(1j * native_phase["green"]), wl, DX, z,
                                                 pad_factor=PAD_FACTOR)
-            q.append(psnr_np(safe_abs(recon).cpu().numpy(), targets[i]))
+            q.append(masked_or_full_psnr(safe_abs(recon).cpu().numpy(), targets[i], i))
         reuse_quality[color] = q
         print(f"   {color}: {[round(x,1) for x in q]} dB")
 
@@ -118,7 +130,7 @@ def main():
     idx = 0
     for i in range(3):
         for color in WAVELENGTHS:
-            q = psnr_np(joint_cps[final_joint][idx], targets[i])
+            q = masked_or_full_psnr(joint_cps[final_joint][idx], targets[i], i)
             joint_quality[color].append(q)
             idx += 1
     print(f"   ({t_joint:.2f}s, {ffts_joint} FFTs)")

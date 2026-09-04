@@ -1,0 +1,58 @@
+PROVENANCE NOTE (added during off-by-one re-verification, this session):
+This log was regenerated from a fresh run of experiment_end_to_end_compute.py
+against the current codebase (Demo/retrieval_torch.py, including the
+history off-by-one fix applied this session -- see that file's docstring).
+
+It REPLACES a previous version of this log that reported 58 iterations /
+696 FFTs / 250W / 500.9x over budget. That previous number could not be
+reproduced: rerunning the exact pre-fix (buggy) retrieval_torch.py against
+this same script, same content, same seed -- with propagation_torch.py,
+targets.py, and fft_counter_torch.py all byte-identical to the committed
+version the old log was presumably generated from -- gives 37 iterations /
+~444 FFTs, not 58/696. Runs are deterministic (verified: two independent
+runs of the current code agree exactly except for ~0.05ms/FFT GPU timing
+jitter, which does not move the FFT count or plateau iteration at all).
+So the discrepancy is not GPU non-determinism, and it is not explained by
+the off-by-one fix either (that fix moves this same measurement by one
+iteration, 37->36, confirmed separately). Best working explanation: the
+old log was generated from some earlier, uncommitted state of the code
+that no longer exists to diff against (Compute/ was never committed to
+git) -- unconfirmed, and no longer resolvable from what's on disk. Do not
+try to reconcile the old 696-FFT figure with this one; treat this log as
+the current authoritative measurement and the old one as unreproducible.
+
+Below is the fresh run's actual output, unedited.
+======================================================================
+
+Device: cuda
+Warming up GPU...
+Running 100-iteration convergence sweep (full resolution, real content, smooth_cutoff, single run)...
+Done: 42.5s total, 1206 FFT calls, final quality 11.85 dB
+
+Plateaued (within 0.2 dB of final) at iteration 36/100 (11.66 dB)
+FFTs per iteration (measured, this run): 12
+FFTs needed to reach plateau: 434
+
+Measured this run: 35.226 ms/FFT
+Analytic cost per FFT at this padded size: 6.50 GFLOP
+Achieved throughput: 0.18 TFLOP/s (1.4% of 3060 peak)
+
+======================================================================
+END-TO-END RESULT (single run -- full resolution, real content,
+no stitching together of separate tests):
+  434 FFTs/frame x 6.50 GFLOP/FFT = 2820.5 GFLOP/frame
+  x 360Hz = 1015.40 TFLOP/s -> 156215mW at 6.5 TOPS/W -> 312.4x over the 500mW budget
+  (Section 4.4's original assumption: 14 FFTs x 1.49 GFLOP = 20.9 GFLOP/frame, 7.5 TFLOP/s, 1,154mW, 2.3x)
+  (Previous stitched-together estimate: ~546 GFLOP/frame, ~30W, ~60x)
+  Peak GPU memory: 4.93 GB
+======================================================================
+
+Quality target still unresolved (10.8) -- this run reports the plateau it
+actually reached, not a pass/fail against a threshold. Once a defensible PSNR
+target exists, read the required iteration count directly off the saved curve.
+Saved plot: end_to_end_compute_convergence.png
+Saved plot: end_to_end_compute_final_recon.png
+
+Second independent run (reproducibility check, same session): identical
+result except 35.242 ms/FFT (vs. 35.226 above) -- GPU timing jitter only,
+FFT count/plateau/quality/power figures all unchanged.

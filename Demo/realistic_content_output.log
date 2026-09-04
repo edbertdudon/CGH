@@ -4,23 +4,23 @@ Warming up GPU...
 REALISTIC CONTENT, full resolution 4700x2700
 
   near: UI icon
-    simultaneous: 11.9 dB  (synthetic-target reference: 11.0 dB)
-    sequential:   13.3 dB  (delta: +1.4 dB)
+    simultaneous: 14.6 dB  (synthetic-target reference: 11.0 dB)
+    sequential:   14.9 dB  (delta: +0.3 dB)
   mid: caption text
-    simultaneous: 14.0 dB  (synthetic-target reference: 11.7 dB)
-    sequential:   18.0 dB  (delta: +4.0 dB)
+    simultaneous: 19.9 dB  (synthetic-target reference: 11.7 dB)
+    sequential:   20.9 dB  (delta: +1.0 dB)
   far: photo-like scene
-    simultaneous: 10.1 dB  (synthetic-target reference: 10.3 dB)
-    sequential:   13.1 dB  (delta: +3.0 dB)
+    simultaneous: 6.3 dB  (synthetic-target reference: 10.3 dB)
+    sequential:   8.4 dB  (delta: +2.1 dB)
 
   Masked PSNR (content bounding box only, not whole-frame) for the two sparse
   planes -- whole-frame PSNR on mostly-empty content inflates/distorts the delta:
-    near: UI icon: simultaneous 7.6 dB, sequential 7.6 dB, delta +0.0 dB  (whole-frame delta was +1.4 dB)
-    mid: caption text: simultaneous 9.9 dB, sequential 9.9 dB, delta +0.1 dB  (whole-frame delta was +4.0 dB)
+    near: UI icon: simultaneous 6.4 dB, sequential 6.2 dB, delta -0.2 dB  (whole-frame delta was +0.3 dB)
+    mid: caption text: simultaneous 7.4 dB, sequential 7.3 dB, delta -0.1 dB  (whole-frame delta was +1.0 dB)
   far: photo-like scene: not masked -- content fills the whole frame, no dominant
-    empty background, so the whole-frame delta (+3.0 dB) is already meaningful.
+    empty background, so the whole-frame delta (+2.1 dB) is already meaningful.
 
-Average sequential delta: +2.77 dB (synthetic-target reference: +0.0 dB)
+Average sequential delta: +1.15 dB (synthetic-target reference: +0.0 dB)
 
 Does the quality ceiling hold? Compare each plane's simultaneous dB above
 against its synthetic-target reference -- similar range confirms the ~10-13dB

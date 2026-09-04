@@ -3,22 +3,22 @@ GPU: NVIDIA GeForce RTX 3060, 12.9 GB total
 Warming up GPU (building cuFFT plans, not timed)...
 Warm-up done. Timings below are now trustworthy.
 
-  [after simultaneous run] peak GPU memory so far: 2.34 GB
-  [after sequential runs] peak GPU memory so far: 2.34 GB
+  [after simultaneous run] peak GPU memory so far: 2.57 GB
+  [after sequential runs] peak GPU memory so far: 2.57 GB
 ======================================================================
 Resolution: 2700x2700 (doc target), pad_factor=2.0
 
 SIMULTANEOUS
-  plane 1: 10.0 dB
-  plane 2: 10.3 dB
-  plane 3: 10.9 dB
-  total FFTs: 192, wall-clock: 5221.6ms (now trustworthy -- warmed up)
+  plane 1: 10.3 dB
+  plane 2: 8.9 dB
+  plane 3: 8.9 dB
+  total FFTs: 192, wall-clock: 5305.2ms (now trustworthy -- warmed up)
 
 SEQUENTIAL
-  plane 1: 9.6 dB  (64 FFTs, 1762.6ms)
-  plane 2: 12.2 dB  (64 FFTs, 1755.0ms)
-  plane 3: 11.6 dB  (64 FFTs, 1755.4ms)
-  total FFTs: 192, wall-clock: 5273.1ms
+  plane 1: 10.6 dB  (64 FFTs, 1795.4ms)
+  plane 2: 10.9 dB  (64 FFTs, 1790.0ms)
+  plane 3: 9.1 dB  (64 FFTs, 1788.3ms)
+  total FFTs: 192, wall-clock: 5373.6ms
 ======================================================================
 
 Compare against small-scale (512x512) findings:

@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 
 from targets import make_multiplane_target
 from retrieval_torch import multiplane_gs_torch
-from metrics import psnr as psnr_np
+from metrics import psnr_intensity as psnr_np
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 WAVELENGTH = 520e-9

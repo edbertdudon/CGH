@@ -66,7 +66,7 @@ def make_edge_taper(shape, taper_width, device, dtype):
 
 def multiplane_gs_torch(target_planes, depths_m, wavelength, dx, n_iters, device="cuda", seed=0, pad_factor=2,
                          complex_dtype=torch.complex64, smooth_cutoff=False, cutoff_width=0.05,
-                         edge_taper=False, taper_width=0.05):
+                         edge_taper=False, taper_width=0.05, init_phase=None):
     """
     Returns (slm_phase, history, recon_by_checkpoint) -- same shape as the
     CPU version in retrieval.py, so plotting code can treat both the same
@@ -80,6 +80,22 @@ def multiplane_gs_torch(target_planes, depths_m, wavelength, dx, n_iters, device
     unnecessary forward pass just to measure PSNR, adding 6 phantom FFT
     calls per iteration -- that's why GS looked more expensive relative to
     SGD than it actually was. Fixed here.)
+
+    History indexing note (found via temporal warm-start testing): the
+    in-loop `field_at_plane` forward pass reflects the phase BEFORE that
+    iteration's correction is applied, not after -- an earlier version of
+    this function scored quality from that pre-correction pass and
+    labeled it as the iteration's result, silently recording each
+    iteration's *starting* quality as its *ending* quality. That shifted
+    every entry in `history` back by one iteration and meant the very
+    last correction applied (at it=n_iters) was never scored at all --
+    `history[-1]` (used everywhere as "final quality") was actually the
+    quality after n_iters-1 corrections. Fixed by scoring recon_planes at
+    the top of the NEXT iteration (or one extra forward-only pass after
+    the loop, for the last iteration) instead of the current one. This
+    costs one extra forward pass per plane, once, at the very end --
+    negligible next to the per-iteration budget, and necessary for
+    history to mean what it claims.
     """
     shape = target_planes[0].shape
     targets_amp = _to_tensor_targets(target_planes, device)
@@ -89,8 +105,11 @@ def multiplane_gs_torch(target_planes, depths_m, wavelength, dx, n_iters, device
     if edge_taper:
         taper = make_edge_taper(shape, taper_width, device, real_dtype)
 
-    torch.manual_seed(seed)
-    slm_phase = (torch.rand(shape, device=device, dtype=real_dtype) * 2 * math.pi - math.pi)
+    if init_phase is not None:
+        slm_phase = init_phase.to(device=device, dtype=real_dtype)
+    else:
+        torch.manual_seed(seed)
+        slm_phase = (torch.rand(shape, device=device, dtype=real_dtype) * 2 * math.pi - math.pi)
     slm_field = torch.exp(1j * slm_phase)
     if taper is not None:
         slm_field = slm_field * taper.to(complex_dtype)
@@ -114,16 +133,33 @@ def multiplane_gs_torch(target_planes, depths_m, wavelength, dx, n_iters, device
                                                cutoff_width=cutoff_width)
             correction += back
 
+        # recon_planes above reflects the phase BEFORE this iteration's
+        # correction -- i.e. the quality after (it-1) corrections, not it.
+        # Score it as iteration (it-1)'s result, not this one.
+        if it > 1:
+            psnrs = [_psnr_torch(r, t) for r, t in zip(recon_planes, targets_amp)]
+            history.append(sum(psnrs) / len(psnrs))
+            if (it - 1) in checkpoints:
+                recon_by_checkpoint[it - 1] = [r.cpu().numpy() for r in recon_planes]
+
         slm_field = correction / len(depths_m)
         slm_phase = torch.angle(slm_field)
         slm_field = torch.exp(1j * slm_phase)
         if taper is not None:
             slm_field = slm_field * taper.to(complex_dtype)
 
-        psnrs = [_psnr_torch(r, t) for r, t in zip(recon_planes, targets_amp)]
-        history.append(sum(psnrs) / len(psnrs))
-        if it in checkpoints:
-            recon_by_checkpoint[it] = [r.cpu().numpy() for r in recon_planes]
+    # One final forward-only pass to score the last iteration's correction
+    # (n_iters), which the loop above computes but never measures.
+    final_recon_planes = []
+    for target_amp, z in zip(targets_amp, depths_m):
+        field_at_plane = angular_spectrum_propagate(slm_field, wavelength, dx, z, pad_factor=pad_factor,
+                                                      complex_dtype=complex_dtype, smooth_cutoff=smooth_cutoff,
+                                                      cutoff_width=cutoff_width)
+        final_recon_planes.append(safe_abs(field_at_plane).detach())
+    psnrs = [_psnr_torch(r, t) for r, t in zip(final_recon_planes, targets_amp)]
+    history.append(sum(psnrs) / len(psnrs))
+    if n_iters in checkpoints:
+        recon_by_checkpoint[n_iters] = [r.cpu().numpy() for r in final_recon_planes]
 
     return slm_phase.detach(), history, recon_by_checkpoint
 
