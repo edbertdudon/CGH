@@ -78,42 +78,38 @@ def kmeans_1d(x, k=3, iters=50):
     return np.sort(centers)
 
 
-def main():
+def build(shape, suffix=""):
     photo = np.array(Image.open(PHOTO_PATH).convert("L"), dtype=np.float64) / 255.0
     depth = np.load(DEPTH_PATH).astype(np.float64)
-    print(f"Loaded photo {photo.shape}, depth {depth.shape}")
+    print(f"[{suffix or 'default'}] Loaded photo {photo.shape}, depth {depth.shape}, target shape {shape}")
 
     x0, y0, x1, y1 = SIGN_BOX
     sign_depth = depth[y0:y1, x0:x1]
-    print(f"Sign-plate sampled depth: median={np.median(sign_depth):.1f}")
 
     centers = kmeans_1d(depth.flatten()[::20])
     thresholds = (centers[:-1] + centers[1:]) / 2
-    print(f"Depth cluster centers (far->near): {centers.round(1)}, thresholds: {thresholds.round(1)}")
 
     # pad width up to height (or vice versa) with black, preserving all content, no cropping
     photo_sq, pad_x = pad_to_square(photo)
     depth_sq, _ = pad_to_square(depth)
-    print(f"Padded to square: {photo_sq.shape} (pad_x={pad_x})")
 
-    photo_512 = resize(photo_sq, SHAPE, order=1)
-    depth_512 = resize(depth_sq, SHAPE, order=1)
+    photo_r = resize(photo_sq, shape, order=1)
+    depth_r = resize(depth_sq, shape, order=1)
 
-    bucket = np.digitize(depth_512, thresholds)  # 0=far, 1=mid, 2=near
+    bucket = np.digitize(depth_r, thresholds)  # 0=far, 1=mid, 2=near
 
-    near_arr = np.where(bucket == 2, photo_512, 0.0)
-    mid_arr = np.where(bucket == 1, photo_512, 0.0)
-    far_arr = np.where(bucket == 0, photo_512, 0.0)
+    near_arr = np.where(bucket == 2, photo_r, 0.0)
+    mid_arr = np.where(bucket == 1, photo_r, 0.0)
+    far_arr = np.where(bucket == 0, photo_r, 0.0)
 
     # map the English text's bounding box through the same pad+resize transform
-    scale = SHAPE[0] / photo_sq.shape[0]
+    scale = shape[0] / photo_sq.shape[0]
     ex0 = int((ENGLISH_TEXT_BOX[0] + pad_x) * scale)
     ex1 = int((ENGLISH_TEXT_BOX[2] + pad_x) * scale)
     ey0 = int(ENGLISH_TEXT_BOX[1] * scale)
     ey1 = int(ENGLISH_TEXT_BOX[3] * scale)
-    print(f"English text region mapped to working resolution: x=({ex0},{ex1}) y=({ey0},{ey1})")
 
-    caption_img = Image.new("L", (SHAPE[1], SHAPE[0]), 0)
+    caption_img = Image.new("L", (shape[1], shape[0]), 0)
     d = ImageDraw.Draw(caption_img)
     box_h = ey1 - ey0
     font = ImageFont.truetype(JAPANESE_FONT_PATH, size=max(8, int(box_h * 0.9)))
@@ -126,32 +122,27 @@ def main():
     # composite: caption replaces the sign's own real content in that region of the mid plane,
     # locked to the sign's real depth (mid plane), not an arbitrary fixed depth
     mid_with_caption = mid_arr.copy()
-    replace_mask = caption_arr > 0.05
-    # clear the original English-text pixels in a slightly generous box, then stamp the caption
     mid_with_caption[max(0, ey0 - 4):ey1 + 4, max(0, ex0 - 4):ex1 + 4] = 0.0
     mid_with_caption = np.maximum(mid_with_caption, caption_arr)
 
-    np.save("target_near.npy", near_arr)
-    np.save("target_mid_with_caption.npy", mid_with_caption)
-    np.save("target_mid_original.npy", mid_arr)
-    np.save("target_far.npy", far_arr)
+    tag = f"_{suffix}" if suffix else ""
+    np.save(f"target_near{tag}.npy", near_arr)
+    np.save(f"target_mid_with_caption{tag}.npy", mid_with_caption)
+    np.save(f"target_far{tag}.npy", far_arr)
 
     def to_img(a):
         return Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8))
 
-    to_img(near_arr).save("preview_near.png")
-    to_img(mid_with_caption).save("preview_mid_with_caption.png")
-    to_img(far_arr).save("preview_far.png")
+    if suffix:  # skip re-saving previews for the default (already-existing) 512 build
+        to_img(near_arr).save(f"preview_near{tag}.png")
+        to_img(mid_with_caption).save(f"preview_mid_with_caption{tag}.png")
+        to_img(far_arr).save(f"preview_far{tag}.png")
 
-    # colorized composite: near=red, mid=green, far=blue, for a single at-a-glance preview
-    composite = np.stack([near_arr, mid_with_caption, far_arr], axis=-1)
-    composite = np.clip(composite, 0, 1)
-    Image.fromarray((composite * 255).astype(np.uint8)).save("preview_composite_rgb.png")
-
-    print("\nSaved: target_near.npy, target_mid_with_caption.npy, target_mid_original.npy, target_far.npy")
-    print("Saved previews: preview_near.png, preview_mid_with_caption.png, preview_far.png, preview_composite_rgb.png")
-    print(f"\nPlane pixel fractions: near={np.mean(bucket==2)*100:.1f}%, mid={np.mean(bucket==1)*100:.1f}%, far={np.mean(bucket==0)*100:.1f}%")
+    print(f"[{suffix or 'default'}] Saved target_near{tag}.npy, target_mid_with_caption{tag}.npy, target_far{tag}.npy")
+    print(f"[{suffix or 'default'}] Plane pixel fractions: near={np.mean(bucket==2)*100:.1f}%, "
+          f"mid={np.mean(bucket==1)*100:.1f}%, far={np.mean(bucket==0)*100:.1f}%")
+    return near_arr, mid_with_caption, far_arr
 
 
 if __name__ == "__main__":
-    main()
+    build(SHAPE)
